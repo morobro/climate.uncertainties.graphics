@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Table 2</title>
+  <style>
+    :root{
+      --bg:#f7f9fc;
+      --panel:#ffffff;
+      --text:#17324a;
+      --muted:#64748b;
+      --line:#dbe4ee;
+      --effect:#3b82f6;
+      --measurement:#8b5cf6;
+      --both:#0f766e;
+      --risk:#f59e0b;
+      --lever:#10b981;
+      --shadow:0 8px 24px rgba(15,23,42,.08);
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:20px;
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid #e7edf4;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .header{
+      padding:20px 22px 14px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg,#fcfdff 0%,#f8fbff 100%);
+    }
+
+    .eyebrow{
+      font-size:12px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(22px, 2.8vw, 34px);
+      line-height:1.1;
+    }
+
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      line-height:1.5;
+      max-width:850px;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      padding:16px 22px 0;
+    }
+
+    .toolbar span{
+      font-size:14px;
+      font-weight:600;
+      color:var(--muted);
+    }
+
+    .chip{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:9px 12px;
+      font-size:14px;
+      cursor:pointer;
+    }
+
+    .chip.active{
+      background:var(--text);
+      color:#fff;
+      border-color:var(--text);
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 14px;
+      padding:14px 22px 18px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .legend-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .pill, .mini-dot{
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      display:inline-block;
+    }
+
+    .effect{background:var(--effect)}
+    .measurement{background:var(--measurement)}
+    .both{background:linear-gradient(180deg,var(--effect),var(--measurement))}
+    .risk{background:var(--risk)}
+    .lever{background:var(--lever)}
+
+    .layout{
+      display:grid;
+      grid-template-columns: minmax(600px, 1.25fr) minmax(280px, .75fr);
+      gap:18px;
+      padding:0 22px 22px;
+    }
+
+    .viz{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .viz-head, .row{
+      display:grid;
+      grid-template-columns:minmax(280px,1fr) 90px 90px;
+      gap:12px;
+      align-items:center;
+    }
+
+    .viz-head{
+      padding:14px 16px 10px;
+      border-bottom:1px solid var(--line);
+      background:#fbfdff;
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .viz-body{
+      padding:4px 8px 8px;
+    }
+
+    .row{
+      padding:14px 8px;
+      border-bottom:1px solid #edf2f7;
+    }
+
+    .row:last-child{border-bottom:none}
+
+    .source{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      min-width:0;
+    }
+
+    .bar{
+      width:10px;
+      height:48px;
+      border-radius:999px;
+      flex:0 0 10px;
+      margin-top:2px;
+    }
+
+    .source-title{
+      font-weight:700;
+      line-height:1.3;
+      margin-bottom:6px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding:5px 9px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid transparent;
+    }
+
+    .badge.effect{
+      color:#114cae;
+      background:#e8f1ff;
+      border-color:#cfe0ff;
+    }
+
+    .badge.measurement{
+      color:#6a35d6;
+      background:#f0ebff;
+      border-color:#ddd0ff;
+    }
+
+    .badge.both{
+      color:#0d625d;
+      background:#e9faf6;
+      border-color:#bfeee4;
+    }
+
+    .dot-cell{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .dot-btn{
+      border:none;
+      background:transparent;
+      padding:10px;
+      border-radius:999px;
+      cursor:pointer;
+      position:relative;
+    }
+
+    .dot-btn:hover{
+      background:#f5f8fc;
+    }
+
+    .dot-btn:focus-visible{
+      outline:3px solid #9ec5ff;
+      outline-offset:2px;
+    }
+
+    .dot{
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      display:block;
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.92), 0 2px 6px rgba(0,0,0,.12);
+    }
+
+    .dot-btn.active .dot{
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.96),
+        0 0 0 5px rgba(23,50,74,.08),
+        0 6px 14px rgba(0,0,0,.14);
+    }
+
+    .detail{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fff;
+      padding:18px;
+      min-height:520px;
+    }
+
+    .detail-top{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .mode{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+
+    .mode.risk{
+      color:#8a5a00;
+      background:#fff5dd;
+      border:1px solid #f5d38b;
+    }
+
+    .mode.lever{
+      color:#0d6b53;
+      background:#eafcf6;
+      border:1px solid #bdeedc;
+    }
+
+    .detail h2{
+      margin:0 0 10px;
+      font-size:24px;
+      line-height:1.2;
+    }
+
+    .detail-body{
+      border-top:1px solid var(--line);
+      padding-top:14px;
+      color:#29455e;
+      line-height:1.55;
+    }
+
+    .detail-body p{margin:0 0 12px}
+    .detail-body ul{
+      margin:0;
+      padding-left:18px;
+    }
+    .detail-body li+li{margin-top:8px}
+
+    .footer{
+      margin-top:18px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    @media (max-width: 920px){
+      .layout{
+        grid-template-columns:1fr;
+      }
+      .detail{
+        min-height:auto;
+      }
+    }
+
+    @media (max-width: 680px){
+      .wrap{padding:12px}
+      .header, .toolbar, .legend, .layout{padding-left:14px; padding-right:14px}
+      .layout{padding-bottom:14px}
+      .viz-head, .row{
+        grid-template-columns:minmax(180px,1fr) 70px 70px;
+        gap:8px;
+      }
+      .source-title{font-size:14px}
+      .dot{width:18px;height:18px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div class="eyebrow">Interactive Table 2</div>
+        <h1>Actionable Guidelines for Reducing Uncertainty in Sustainability Metrics</h1>
+        <p class="subtitle">
+          Click an orange dot to see how a source of uncertainty undermines credibility, or click a green dot to see the primary levers to reduce uncertainty.
+        </p>
+      </div>
+
+      <div class="toolbar">
+        <span>Filter:</span>
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="effect">Effect uncertainty</button>
+        <button class="chip" data-filter="measurement">Measurement uncertainty</button>
+        <button class="chip" data-filter="both">Affects both</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="pill effect"></span> Effect uncertainty</div>
+        <div class="legend-item"><span class="pill measurement"></span> Measurement uncertainty</div>
+        <div class="legend-item"><span class="pill both"></span> Effect + measurement uncertainty</div>
+        <div class="legend-item"><span class="mini-dot risk"></span> Credibility risk</div>
+        <div class="legend-item"><span class="mini-dot lever"></span> Reduction levers</div>
+      </div>
+
+      <div class="layout">
+        <section class="viz" aria-label="Interactive uncertainty table">
+          <div class="viz-head">
+            <div>Source of uncertainty</div>
+            <div style="text-align:center">Risk</div>
+            <div style="text-align:center">Levers</div>
+          </div>
+          <div class="viz-body" id="rows"></div>
+        </section>
+
+        <aside class="detail" aria-live="polite">
+          <div class="detail-top" id="detailTop"></div>
+          <h2 id="detailTitle">Select a dot</h2>
+          <div class="detail-body" id="detailBody">
+            <p>Choose a source of uncertainty and click one of the dots to explore:</p>
+            <ul>
+              <li><strong>Orange</strong>: how it undermines credibility</li>
+              <li><strong>Green</strong>: primary levers to reduce uncertainty</li>
+            </ul>
+          </div>
+          <div class="footer">
+            Based on Table 2 from <em>Improving the Credibility of Corporate Sustainability Metrics</em>.
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const data = [
+      {
+        id: "system-complexity",
+        source: "System Complexity & Interdependence",
+        type: "effect",
+        label: "Effect uncertainty",
+        credibility: "Attribution of outcomes to a single intervention is weak due to multi-factor causality. Reported results may reflect interactions among many variables rather than the specific initiative itself.",
+        levers: [
+          "Use process indicators supported by logic-of-change models.",
+          "Run pilot programs before scaling.",
+          "Complement quantitative metrics with qualitative assessments that validate causal links."
+        ]
+      },
+      {
+        id: "temporal-delay",
+        source: "Temporal Delay",
+        type: "effect",
+        label: "Effect uncertainty",
+        credibility: "Delayed outcomes reduce feedback utility and increase reliance on projections. This can create pressure to claim success before the true effects can be credibly observed.",
+        levers: [
+          "Combine short-term process metrics with long-term tracking of lagging outcomes.",
+          "Clearly communicate expected timeframes.",
+          "Use interim milestones without overstating ultimate impact."
+        ]
+      },
+      {
+        id: "external-volatility",
+        source: "External Volatility",
+        type: "both",
+        label: "Effect & measurement uncertainty",
+        credibility: "Fluctuating regulations, market conditions, or external shocks can distort both actions and measurements. Results may appear stronger or weaker because of changing context rather than true initiative performance.",
+        levers: [
+          "Normalize metrics where appropriate.",
+          "Use scenario modeling.",
+          "Conduct sensitivity analyses.",
+          "Communicate assumptions transparently."
+        ]
+      },
+      {
+        id: "behavioral-sources",
+        source: "Behavioral Sources: Cognitive Bias, Resistance & Politics",
+        type: "effect",
+        label: "Effect uncertainty",
+        credibility: "Management or employee resistance and cognitive biases can block or distort the process-to-outcome pathway. Even well-designed initiatives may underperform or be interpreted too optimistically.",
+        levers: [
+          "Pilot test interventions.",
+          "Engage stakeholders in change management.",
+          "Use logic models and feedback loops to surface resistance early."
+        ]
+      },
+      {
+        id: "data-gaps",
+        source: "Data Gaps & Fragmentation",
+        type: "measurement",
+        label: "Measurement uncertainty",
+        credibility: "Inconsistent or missing data limits accuracy and comparability. Stakeholders may be unable to distinguish real performance changes from changes in data quality or reporting method.",
+        levers: [
+          "Adopt standardized frameworks.",
+          "Invest in integrated data systems.",
+          "Ensure full traceability across measurement processes."
+        ]
+      },
+      {
+        id: "unclear-boundaries",
+        source: "Unclear Boundaries & Assumptions",
+        type: "measurement",
+        label: "Measurement uncertainty",
+        credibility: "Unclear system boundaries or contested modeling assumptions reduce confidence. Reported values may depend heavily on methodological choices rather than underlying reality.",
+        levers: [
+          "Disclose ranges instead of only point estimates.",
+          "Document assumptions clearly.",
+          "Use confidence intervals where feasible.",
+          "Consider strategic silence when uncertainty is extreme."
+        ]
+      },
+      {
+        id: "strategic-bias",
+        source: "Strategic Bias & Gaming",
+        type: "measurement",
+        label: "Measurement uncertainty",
+        credibility: "Metrics tied to incentives may be selectively disclosed or manipulated. This undermines confidence in whether the reporting system is neutral, complete, and trustworthy.",
+        levers: [
+          "Require third-party assurance.",
+          "Create audit trails.",
+          "Reduce internal discretion in reporting.",
+          "Separate implementation and reporting responsibilities where possible."
+        ]
+      }
+    ];
+
+    let currentFilter = "all";
+    let active = { id: data[0].id, mode: "credibility" };
+
+    const rows = document.getElementById("rows");
+    const detailTop = document.getElementById("detailTop");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailBody = document.getElementById("detailBody");
+
+    function visibleData() {
+      if (currentFilter === "all") return data;
+      return data.filter(d => d.type === currentFilter);
+    }
+
+    function badgeClass(type) {
+      return type === "both" ? "both" : type;
+    }
+
+    function renderRows() {
+      const items = visibleData();
+      if (!items.find(x => x.id === active.id)) {
+        active = { id: items[0].id, mode: "credibility" };
+      }
+
+      rows.innerHTML = items.map(item => `
+        <div class="row">
+          <div class="source">
+            <div class="bar ${badgeClass(item.type)}"></div>
+            <div>
+              <div class="source-title">${item.source}</div>
+              <span class="badge ${badgeClass(item.type)}">${item.label}</span>
+            </div>
+          </div>
+          <div class="dot-cell">
+            <button class="dot-btn ${active.id === item.id && active.mode === "credibility" ? "active" : ""}" data-id="${item.id}" data-mode="credibility" aria-label="${item.source}: credibility risk">
+              <span class="dot risk"></span>
+            </button>
+          </div>
+          <div class="dot-cell">
+            <button class="dot-btn ${active.id === item.id && active.mode === "levers" ? "active" : ""}" data-id="${item.id}" data-mode="levers" aria-label="${item.source}: reduction levers">
+              <span class="dot lever"></span>
+            </button>
+          </div>
+        </div>
+      `).join("");
+
+      rows.querySelectorAll(".dot-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          active = { id: btn.dataset.id, mode: btn.dataset.mode };
+          renderRows();
+          renderDetail();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const item = data.find(d => d.id === active.id);
+      if (!item) return;
+
+      const isRisk = active.mode === "credibility";
+      detailTop.innerHTML = `
+        <span class="badge ${badgeClass(item.type)}">${item.label}</span>
+        <span class="mode ${isRisk ? "risk" : "lever"}">${isRisk ? "Credibility risk" : "Reduction levers"}</span>
+      `;
+      detailTitle.textContent = item.source;
+
+      if (isRisk) {
+        detailBody.innerHTML = `<p>${item.credibility}</p>`;
+      } else {
+        detailBody.innerHTML = `
+          <p>The primary levers for reducing uncertainty here are:</p>
+          <ul>${item.levers.map(l => `<li>${l}</li>`).join("")}</ul>
+        `;
+      }
+    }
+
+    document.querySelectorAll(".chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".chip").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderRows();
+        renderDetail();
+      });
+    });
+
+    renderRows();
+    renderDetail();
+  </script>
+</body>
+</html>
